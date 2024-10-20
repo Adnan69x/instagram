@@ -1,6 +1,5 @@
 import os
 import shutil
-import time
 import zipfile
 import urllib.parse
 from flask import Flask, request, jsonify, send_file, render_template
@@ -28,10 +27,11 @@ def create_zip(folder):
 
 # Helper function to clear previous downloads
 def clear_download_folder():
-    shutil.rmtree(DOWNLOAD_FOLDER)
+    if os.path.exists(DOWNLOAD_FOLDER):
+        shutil.rmtree(DOWNLOAD_FOLDER)
     os.makedirs(DOWNLOAD_FOLDER)
 
-# Helper function to download Instagram posts/reels
+# Helper function to download Instagram posts or reels
 def download_post_or_reel(shortcode):
     post = instaloader.Post.from_shortcode(L.context, shortcode)
     L.download_post(post, target=DOWNLOAD_FOLDER)
@@ -40,6 +40,11 @@ def download_post_or_reel(shortcode):
 def download_stories_by_username(username):
     profile = instaloader.Profile.from_username(L.context, username)
     L.download_stories(userids=[profile.userid], filename_target=DOWNLOAD_FOLDER)
+
+# Route for homepage
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # Download Instagram photos, reels, or stories
 @app.route('/download', methods=['POST'])
@@ -71,4 +76,5 @@ def download_instagram_content():
         return jsonify({"error": str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Run the app, accessible via external IP
+    app.run(debug=True, host='0.0.0.0', port=5000)
